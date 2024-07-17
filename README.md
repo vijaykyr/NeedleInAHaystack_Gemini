@@ -1,8 +1,12 @@
 # Needle In A Haystack - Pressure Testing LLMs
 
+This repository is a fork of Greg Kamradt code https://twitter.com/GregKamradt. Its purpose is to add support for testing Google Gemini models.
+
+Original Repository: https://github.com/gkamradt/LLMTest_NeedleInAHaystack
+
 A simple 'needle in a haystack' analysis to test in-context retrieval ability of long context LLMs.
 
-Supported model providers: OpenAI, Anthropic, Cohere
+Supported model providers: **Google**, OpenAI, Anthropic, Cohere
 
 Get the behind the scenes on the [overview video](https://youtu.be/KwRRuiCCdmc).
 
