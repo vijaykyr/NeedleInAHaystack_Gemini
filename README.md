@@ -7,7 +7,7 @@ Original Repository: https://github.com/gkamradt/LLMTest_NeedleInAHaystack
 This fork adds support for using **Google Gemini** models as the provider and/or evaluator.
 
 ```zsh
-needlehaystack.run_test --provider google --evaluator google  --model_name "gemini-1.5-pro" --document_depth_percents "[50]" --context_lengths "[200]"
+needlehaystack.run_test --provider google --evaluator google  --model_name "gemini-1.5-pro" --evaluator_model_name "gemini-1.5-pro" --document_depth_percents "[50]" --context_lengths "[200]"
 ```
 
 ### Original readme below
