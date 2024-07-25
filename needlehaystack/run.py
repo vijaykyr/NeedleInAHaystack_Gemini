@@ -5,17 +5,18 @@ from dotenv import load_dotenv
 from jsonargparse import CLI
 
 from . import LLMNeedleHaystackTester, LLMMultiNeedleHaystackTester
-from .evaluators import Evaluator, LangSmithEvaluator, OpenAIEvaluator, GoogleEvaluator
-from .providers import Anthropic, ModelProvider, OpenAI, Cohere, Google
+from .evaluators import Evaluator, GoogleEvaluator
+from .providers import ModelProvider, Google
 
 load_dotenv()
 
 @dataclass
 class CommandArgs():
-    provider: str = "openai"
-    evaluator: str = "openai"
-    model_name: str = "gpt-3.5-turbo-0125"
-    evaluator_model_name: Optional[str] = "gpt-3.5-turbo-0125"
+    gcp_project_id: str
+    provider: str = "google"
+    evaluator: str = "google"
+    model_name: str = "gemini-1.5-pro-001"
+    evaluator_model_name: Optional[str] = "gemini-1.5-pro-001"
     needle: Optional[str] = "\nThe best thing to do in San Francisco is eat a sandwich and sit in Dolores Park on a sunny day.\n"
     haystack_dir: Optional[str] = "PaulGrahamEssays"
     retrieval_question: Optional[str] = "What is the best thing to do in San Francisco?"
@@ -66,7 +67,7 @@ def get_model_to_test(args: CommandArgs) -> ModelProvider:
         case "cohere":
             return Cohere(model_name=args.model_name)
         case "google":
-            return Google(model_name=args.model_name)
+            return Google(model_name=args.model_name, project_id=args.gcp_project_id)
         case _:
             raise ValueError(f"Invalid provider: {args.provider}")
 
@@ -89,7 +90,8 @@ def get_evaluator(args: CommandArgs) -> Evaluator:
                                    question_asked=args.retrieval_question,
                                    true_answer=args.needle)
         case "google":
-            return GoogleEvaluator(model_name=args.evaluator_model_name,
+            return GoogleEvaluator(project_id=args.gcp_project_id,
+                                   model_name=args.evaluator_model_name,
                                    question_asked=args.retrieval_question,
                                    true_answer=args.needle)
         case "langsmith":

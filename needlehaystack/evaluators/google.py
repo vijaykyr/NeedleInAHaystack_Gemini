@@ -3,7 +3,7 @@ import os
 from .evaluator import Evaluator
 
 from langchain.evaluation import load_evaluator
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_google_vertexai import ChatVertexAI
 
 class GoogleEvaluator(Evaluator):
     DEFAULT_MODEL_KWARGS: dict = dict(temperature=0)
@@ -16,11 +16,13 @@ class GoogleEvaluator(Evaluator):
                 Only respond with a numberical score"""}
 
     def __init__(self,
+                 project_id: str,
                  model_name: str = "gemini-1.5-pro",
                  model_kwargs: dict = DEFAULT_MODEL_KWARGS,
                  true_answer: str = None,
                  question_asked: str = None,):
         """
+        :param project_id: ID of the google cloud platform project to use
         :param model_name: The name of the model.
         :param model_kwargs: Model configuration. Default is {temperature: 0}
         :param true_answer: The true answer to the question asked.
@@ -34,16 +36,8 @@ class GoogleEvaluator(Evaluator):
         self.model_kwargs = model_kwargs
         self.true_answer = true_answer
         self.question_asked = question_asked
-
-        api_key = os.getenv('NIAH_EVALUATOR_API_KEY')
-        if (not api_key):
-            raise ValueError("NIAH_EVALUATOR_API_KEY must be in env for using google evaluator.")
-
-        self.api_key = api_key
         
-        self.evaluator = ChatGoogleGenerativeAI(model=self.model_name,
-                                    google_api_key=self.api_key,
-                                    **self.model_kwargs)
+        self.evaluator = ChatVertexAI(model=self.model_name, **self.model_kwargs)
 
     def evaluate_response(self, response: str) -> int:
         evaluator = load_evaluator(

@@ -1,13 +1,11 @@
 import os
-from operator import itemgetter
 import pkg_resources
 import requests
 from typing import Optional
 
-import google.generativeai as genai
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.prompts import PromptTemplate
 import sentencepiece
+import vertexai
+from vertexai.generative_models import GenerativeModel
 
 from .model import ModelProvider
 
@@ -28,6 +26,7 @@ class Google(ModelProvider):
     VOCAB_FILE_URL = "https://raw.githubusercontent.com/google/gemma_pytorch/33b652c465537c6158f9a472ea5700e5e770ad3f/tokenizer/tokenizer.model"
 
     def __init__(self,
+                 project_id: str,
                  model_name: str = "gemini-1.5-pro",
                  model_kwargs: dict = DEFAULT_MODEL_KWARGS,
                  vocab_file_url: str = VOCAB_FILE_URL):
@@ -35,23 +34,17 @@ class Google(ModelProvider):
         Initializes the Google model provider with a specific model.
 
         Args:
+            project_id (str): ID of the google cloud platform project to use
             model_name (str): The name of the Google model to use. Defaults to 'gemini-1.5-pro'.
             model_kwargs (dict): Model configuration. Defaults to {max_tokens: 300, temperature: 0}.
             vocab_file_url (str): Sentencepiece model file that defines tokenization vocabulary. Deafults to gemma
                 tokenizer https://github.com/google/gemma_pytorch/blob/main/tokenizer/tokenizer.model
-
-        Raises:
-            ValueError: If NIAH_MODEL_API_KEY is not found in the environment.
         """
-        api_key = os.getenv('NIAH_MODEL_API_KEY')
-        if (not api_key):
-            raise ValueError("NIAH_MODEL_API_KEY must be in env.")
 
         self.model_name = model_name
         self.model_kwargs = model_kwargs
-        self.api_key = api_key
-        genai.configure(api_key=self.api_key)
-        self.model = genai.GenerativeModel(self.model_name)
+        vertexai.init(project=project_id, location="us-central1")
+        self.model = GenerativeModel(self.model_name)
 
         local_vocab_file = 'tokenizer.model'
         if not os.path.exists(local_vocab_file):
@@ -126,46 +119,5 @@ class Google(ModelProvider):
             str: The decoded text string.
         """
         return self.tokenizer.decode(tokens[:context_length])
-
-    def get_langchain_runnable(self, context: str) -> str:
-        """
-        Creates a LangChain runnable that constructs a prompt based on a given context and a question,
-        queries the Google model, and returns the model's response. This method leverages the LangChain
-        library to build a sequence of operations: extracting input variables, generating a prompt,
-        querying the model, and processing the response.
-
-        Args:
-            context (str): The context or background information relevant to the user's question.
-            This context is provided to the model to aid in generating relevant and accurate responses.
-
-        Returns:
-            str: A LangChain runnable object that can be executed to obtain the model's response to a
-            dynamically provided question. The runnable encapsulates the entire process from prompt
-            generation to response retrieval.
-
-        Example:
-            To use the runnable:
-                - Define the context and question.
-                - Execute the runnable with these parameters to get the model's response.
-        """
-
-        template = """You are a helpful AI bot that answers questions for a user. Keep your response short and direct" \n
-        \n ------- \n 
-        {context} 
-        \n ------- \n
-        Here is the user question: \n --- --- --- \n {question} \n Don't give information outside the document or repeat your findings."""
-
-        prompt = PromptTemplate(
-            template=template,
-            input_variables=["context", "question"],
-        )
-        # Create a LangChain runnable
-        model = ChatGoogleGenerativeAI(temperature=0, model=self.model_name)
-        chain = ({"context": lambda x: context,
-                  "question": itemgetter("question")}
-                 | prompt
-                 | model
-                 )
-        return chain
 
 
