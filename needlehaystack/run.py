@@ -1,14 +1,11 @@
 from dataclasses import dataclass, field
 from typing import Optional
 
-from dotenv import load_dotenv
 from jsonargparse import CLI
 
 from . import LLMNeedleHaystackTester, LLMMultiNeedleHaystackTester
 from .evaluators import Evaluator, GoogleEvaluator
 from .providers import ModelProvider, Google
-
-load_dotenv()
 
 @dataclass
 class CommandArgs():

@@ -3,5 +3,4 @@ jsonargparse
 langchain
 langchain_community
 langchain-google-vertexai
-python-dotenv
 sentencepiece
