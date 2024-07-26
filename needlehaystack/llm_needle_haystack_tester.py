@@ -150,7 +150,7 @@ class LLMNeedleHaystackTester:
                     random_city = random.choice(RANDOM_NEEDLE_CITIES)
                     random_num = random.randint(1, 100)
                     self.retrieval_question = f'What is the special magic {random_city} number?'
-                    self.needle = f'The special magic {random_city} number is: {random_num}'
+                    self.needle = f'\nThe special magic {random_city} number is: {random_num}\n'
                 task = self.bound_evaluate_and_log(
                     sem, context_length, depth_percent, self.retrieval_question, self.needle)
                 tasks.append(task)

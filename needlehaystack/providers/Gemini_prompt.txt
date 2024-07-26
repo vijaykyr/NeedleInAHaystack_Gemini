@@ -4,6 +4,7 @@ Human: <context>
 {context}
 </context>
 
-{retrieval_question} Don't give information outside the document or repeat your findings
+{retrieval_question} Don't give information outside the document or repeat your findings. If the
+information is not available in the context respond UNANSWERABLE.
 
 Assistant: Here is the most relevant sentence in the context:
