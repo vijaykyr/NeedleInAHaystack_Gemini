@@ -5,7 +5,8 @@ from typing import Optional
 
 import sentencepiece
 import vertexai
-from vertexai.generative_models import GenerativeModel
+from google.cloud.aiplatform_v1 import HarmCategory
+from vertexai.generative_models import GenerativeModel, HarmBlockThreshold
 
 from .model import ModelProvider
 
@@ -75,7 +76,13 @@ class Google(ModelProvider):
         """
         response = await self.model.generate_content_async(
             prompt,
-            generation_config=self.model_kwargs
+            generation_config=self.model_kwargs,
+            safety_settings={
+                HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+                HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+                HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+                HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+            }
         )
 
         return response.text
