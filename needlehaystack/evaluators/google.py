@@ -18,28 +18,17 @@ class GoogleEvaluator(Evaluator):
     def __init__(self,
                  project_id: str,
                  model_name: str = "gemini-1.5-pro",
-                 model_kwargs: dict = DEFAULT_MODEL_KWARGS,
-                 true_answer: str = None,
-                 question_asked: str = None,):
+                 model_kwargs: dict = DEFAULT_MODEL_KWARGS):
         """
         :param project_id: ID of the google cloud platform project to use
         :param model_name: The name of the model.
         :param model_kwargs: Model configuration. Default is {temperature: 0}
-        :param true_answer: The true answer to the question asked.
-        :param question_asked: The question asked to the model.
         """
-
-        if (not true_answer) or (not question_asked):
-            raise ValueError("true_answer and question_asked must be supplied with init.")
-
         self.model_name = model_name
         self.model_kwargs = model_kwargs
-        self.true_answer = true_answer
-        self.question_asked = question_asked
-        
         self.evaluator = ChatVertexAI(model=self.model_name, **self.model_kwargs)
 
-    def evaluate_response(self, response: str) -> int:
+    def evaluate_response(self, response: str, question_asked: str, true_answer: str) -> int:
         evaluator = load_evaluator(
             "labeled_score_string",
             criteria=self.CRITERIA,
@@ -51,10 +40,10 @@ class GoogleEvaluator(Evaluator):
             prediction=response,
 
             # The actual answer
-            reference=self.true_answer,
+            reference=true_answer,
 
             # The question asked
-            input=self.question_asked,
+            input=question_asked,
         )
 
         return int(eval_result['score'])

@@ -2,6 +2,7 @@ import asyncio
 import glob
 import json
 import os
+import random
 import time
 
 import numpy as np
@@ -12,6 +13,20 @@ from .providers import ModelProvider
 from asyncio import Semaphore
 from datetime import datetime, timezone
 
+RANDOM_NEEDLE_CITIES = [
+    'Chicago', 'Yangon', 'Antananarivo', 'Colombo', 'Almaty', 'Sydney', 'Chicago', 'Mexico City',
+    'Seattle', 'Lagos', 'Amsterdam', 'Belgrade', 'Cairo', 'Baghdad', 'Damascus', 'Kigali', 'Dakar',
+    'Dakar', 'Sofia', 'Kigali', 'Victoria', 'Tashkent', 'Mumbai', 'Barcelona', 'Almaty', 'Amman',
+    'Toronto', 'Bratislava', 'Johannesburg', 'Thimphu', 'Bangkok', 'Santiago', 'Cairo', 'San Francisco',
+    'Lagos', 'Amsterdam', 'Paris', 'Rabat', 'Santiago', 'Copenhagen', 'Madrid', 'Kigali',
+    'Ho Chi Minh City', 'Sarajevo', 'Delhi', 'Istanbul', 'Ho Chi Minh City', 'Khartoum', 'Helsinki',
+    'Doha', 'Istanbul', 'Kuala Lumpur', 'Budapest', 'Shanghai', 'Moscow', 'Los Angeles', 'Oslo',
+    'Johannesburg', 'Berlin', 'Bangalore', 'Tokyo', 'Melbourne', 'Barcelona', 'Chicago', 'Port Louis',
+    'Lisbon', 'Nairobi', 'Kampala', 'Lima', 'Maputo', 'Vancouver', 'Dubai', 'Khartoum', 'Jakarta',
+    'Madrid', 'Yerevan', 'Beirut', 'Athens', 'Chicago', 'Paris', 'Bucharest', 'Copenhagen', 'Brussels',
+    'Damascus', 'Seattle', 'Los Angeles', 'Yerevan', 'Victoria', 'Tunis', 'Astana', 'Seoul',
+    'Buenos Aires', 'Bangkok', 'Colombo', 'Brussels', 'Khartoum', 'Doha', 'San Francisco', 'Vienna', 'Jakarta']
+
 class LLMNeedleHaystackTester:
     """
     This class is used to test the LLM Needle Haystack.
@@ -19,6 +34,7 @@ class LLMNeedleHaystackTester:
     def __init__(self,
                  model_to_test: ModelProvider = None,
                  evaluator: Evaluator = None,
+                 dynamic_needle = True,
                  needle = None,
                  haystack_dir = "PaulGrahamEssays",
                  retrieval_question = None,
@@ -68,6 +84,7 @@ class LLMNeedleHaystackTester:
         if not needle or not haystack_dir or not retrieval_question:
             raise ValueError("Needle, haystack, and retrieval_question must be provided.")
 
+        self.dynamic_needle = dynamic_needle
         self.needle = needle
         self.haystack_dir = haystack_dir
         self.retrieval_question = retrieval_question
@@ -129,13 +146,21 @@ class LLMNeedleHaystackTester:
         tasks = []
         for context_length in self.context_lengths:
             for depth_percent in self.document_depth_percents:
-                task = self.bound_evaluate_and_log(sem, context_length, depth_percent)
+                if self.dynamic_needle:
+                    random_city = random.choice(RANDOM_NEEDLE_CITIES)
+                    random_num = random.randint(1, 100)
+                    self.retrieval_question = f'What is the special magic {random_city} number?'
+                    self.needle = f'The special magic {random_city} number is: {random_num}'
+                task = self.bound_evaluate_and_log(
+                    sem, context_length, depth_percent, self.retrieval_question, self.needle)
                 tasks.append(task)
 
         # Wait for all tasks to complete
         await asyncio.gather(*tasks)
 
-    async def evaluate_and_log(self, context_length, depth_percent):
+    async def evaluate_and_log(self, context_length, depth_percent, retrieval_question, needle):
+        self.retrieval_question = retrieval_question
+        self.needle = needle
         # Checks to see if you've already checked a length/percent/version.
         # This helps if the program stop running and you want to restart later
         if self.save_results:
@@ -157,7 +182,7 @@ class LLMNeedleHaystackTester:
         test_elapsed_time = test_end_time - test_start_time
 
         # Compare the reponse to the actual needle you placed
-        score = self.evaluation_model.evaluate_response(response)
+        score = self.evaluation_model.evaluate_response(response, self.retrieval_question, self.needle)
 
         results = {
             # 'context' : context, # Uncomment this line if you'd like to save the context the model was asked to retrieve from. Warning: This will become very large.
@@ -180,6 +205,7 @@ class LLMNeedleHaystackTester:
             print (f"Context: {context_length} tokens")
             print (f"Depth: {depth_percent}%")
             print (f"Score: {score}")
+            print (f"Needle: {needle}")
             print (f"Response: {response}\n")
 
         context_file_location = f'{self.model_name.replace(".", "_")}_len_{context_length}_depth_{int(depth_percent*100)}'
@@ -307,7 +333,6 @@ class LLMNeedleHaystackTester:
         print (f"- Model: {self.model_name}")
         print (f"- Context Lengths: {len(self.context_lengths)}, Min: {min(self.context_lengths)}, Max: {max(self.context_lengths)}")
         print (f"- Document Depths: {len(self.document_depth_percents)}, Min: {min(self.document_depth_percents)}%, Max: {max(self.document_depth_percents)}%")
-        print (f"- Needle: {self.needle.strip()}")
         print ("\n\n")
 
     def start_test(self):

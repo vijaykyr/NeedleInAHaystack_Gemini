@@ -4,16 +4,24 @@ This repository is a fork of Greg Kamradt code https://twitter.com/GregKamradt.
 
 Original Repository: https://github.com/gkamradt/LLMTest_NeedleInAHaystack
 
-This fork adds support for using **Google Gemini** models as the provider and evaluator.
+This fork adds support for using **Google Gemini** (and only Google Gemini) models as the provider and evaluator.
 
 ```zsh
 needlehaystack.run_test --gcp_project_id <YOUR_PROJECT_ID>  --model_name "gemini-1.5-pro" --evaluator_model_name "gemini-1.5-pro" --document_depth_percents "[50]" --context_lengths "[200]"
 ```
 
+It also differs in that the needle behavior matches that used in the [Gemini 1.5 paper](https://arxiv.org/pdf/2403.05530). Quoting from the paper:
+
+> We insert a needle at linearly spaced intervals from the beginning to the end of the context, where
+the needle is i.e., “The special magic {city} number is: {number}” where the city and
+number are varied for each query, and query the model to return the magic number for a specific
+city.
+
+This dynamic needle is prevent false positives from caching. To revert to the original static needle behavior use `--dynamic_needle=False`
 ### Original readme below
 A simple 'needle in a haystack' analysis to test in-context retrieval ability of long context LLMs.
 
-Supported model providers: **Google**, OpenAI, Anthropic, Cohere
+Supported model providers: **Only Google**, ~~OpenAI, Anthropic, Cohere~~
 
 Get the behind the scenes on the [overview video](https://youtu.be/KwRRuiCCdmc).
 
